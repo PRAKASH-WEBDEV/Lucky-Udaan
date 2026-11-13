@@ -211,7 +211,7 @@ abstract class ResourceController extends Controller
         if ($q = trim((string) $request->get('q'))) {
             $query->where(function (Builder $w) use ($q) {
                 foreach ($this->searchable as $col) {
-                    $w->orWhere($col, 'like', '%'.$q.'%');
+                    $w->orWhereLike($col, '%'.$q.'%');
                 }
             });
         }

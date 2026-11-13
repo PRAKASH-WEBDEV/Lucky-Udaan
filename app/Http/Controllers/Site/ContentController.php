@@ -104,7 +104,7 @@ class ContentController extends Controller
             'tabs' => ['' => 'All', 'blog' => 'Blog', 'news' => 'News'],
             'baseRoute' => 'blog.index',
             'items' => Post::published()->ofType($type ?: ['blog', 'news'])
-                ->when($q, fn ($w) => $w->where(fn ($x) => $x->where('title', 'like', "%$q%")->orWhere('excerpt', 'like', "%$q%")))
+                ->when($q, fn ($w) => $w->where(fn ($x) => $x->whereLike('title', "%$q%")->orWhereLike('excerpt', "%$q%")))
                 ->paginate(9)->withQueryString(),
         ]);
     }

@@ -34,8 +34,8 @@ class DonationController extends ResourceController
     {
         $query = parent::filteredQuery($request->duplicate($request->except('q')));
         if ($q = trim((string) $request->get('q'))) {
-            $query->where(fn ($w) => $w->where('receipt_no', 'like', "%$q%")->orWhere('transaction_ref', 'like', "%$q%")
-                ->orWhereHas('donor', fn ($d) => $d->where('name', 'like', "%$q%")->orWhere('phone', 'like', "%$q%")->orWhere('email', 'like', "%$q%")));
+            $query->where(fn ($w) => $w->whereLike('receipt_no', "%$q%")->orWhereLike('transaction_ref', "%$q%")
+                ->orWhereHas('donor', fn ($d) => $d->whereLike('name', "%$q%")->orWhereLike('phone', "%$q%")->orWhereLike('email', "%$q%")));
         }
 
         return $query;

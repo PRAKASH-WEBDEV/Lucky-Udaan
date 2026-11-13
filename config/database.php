@@ -86,7 +86,8 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL'),
+            // Single-URL config (Neon / Vercel Storage injects DATABASE_URL).
+            'url' => env('DB_URL', env('DATABASE_URL')),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),
@@ -96,7 +97,24 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'sslmode' => env('DB_SSLMODE', 'require'),
+        ],
+
+        // Read-only source used once by `php artisan db:copy-mysql-to-pgsql`.
+        // Uses its own MYSQL_SOURCE_* variables so it is unaffected when the
+        // DB_* variables are pointed at Postgres. Defaults match local XAMPP.
+        'mysql_source' => [
+            'driver' => 'mysql',
+            'host' => env('MYSQL_SOURCE_HOST', '127.0.0.1'),
+            'port' => env('MYSQL_SOURCE_PORT', '3306'),
+            'database' => env('MYSQL_SOURCE_DATABASE', 'lucky_udaan'),
+            'username' => env('MYSQL_SOURCE_USERNAME', 'root'),
+            'password' => env('MYSQL_SOURCE_PASSWORD', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
         ],
 
         'sqlsrv' => [

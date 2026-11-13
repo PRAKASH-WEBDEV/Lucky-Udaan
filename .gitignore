@@ -22,3 +22,15 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /public/uploads
+
+# Local env variants (keep only the example)
+.env.*
+!.env.example
+
+# Database dumps / local database files
+*.sql
+*.sql.gz
+*.dump
+*.backup
+/database/*.sqlite
+/database/*.sqlite-journal
