@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Vercel terminates TLS at its edge; trust its X-Forwarded-* headers.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'admin.can' => \App\Http\Middleware\AdminCan::class,
             'admin.active' => \App\Http\Middleware\EnsureAdminIsActive::class,
