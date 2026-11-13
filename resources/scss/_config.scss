@@ -1,0 +1,69 @@
+// Shared Bootstrap configuration for the website and dashboard.
+// Brand colours are also exposed as CSS variables so Website Settings can change them at runtime.
+
+$brand: #1f7a4d;
+$brand-dark: #0f3d2e;
+$accent: #e2a93b;
+
+$primary: $brand;
+$secondary: #5b6b63;
+$success: #2e9e5b;
+$info: #2f7fb8;
+$warning: #e2a93b;
+$danger: #c8473b;
+$light: #f5f7f4;
+$dark: #13241c;
+
+$body-color: #2a3530;
+$body-bg: #ffffff;
+$headings-color: #10231a;
+$link-color: $brand;
+$link-hover-color: $brand-dark;
+
+$font-family-sans-serif: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', Arial, sans-serif;
+$headings-font-family: 'Plus Jakarta Sans Variable', 'Inter Variable', system-ui, sans-serif;
+$headings-font-weight: 700;
+$font-size-base: 1rem;
+$line-height-base: 1.65;
+
+$border-radius: .625rem;
+$border-radius-sm: .5rem;
+$border-radius-lg: 1rem;
+$border-radius-xl: 1.25rem;
+$border-color: #e3e8e4;
+
+$input-padding-y: .7rem;
+$input-padding-x: .95rem;
+$input-btn-padding-y: .7rem;
+$input-btn-padding-x: 1.35rem;
+$btn-font-weight: 600;
+$input-focus-border-color: rgba($brand, .55);
+$input-btn-focus-color: rgba($brand, .2);
+
+// Extra breakpoints for large desktop monitors.
+// 1400–1799 → 1320px container (incl. 1920 @125% = 1536 effective)
+// 1800–2399 → 1520px (1920 Full HD)
+// 2400+     → 1800px (2560 QHD and wider)
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px,
+  x3l: 1800px,
+  x4l: 2400px
+);
+
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px,
+  xxl: 1320px,
+  x3l: 1520px,
+  x4l: 1800px
+);
+
+$enable-negative-margins: true;
+$enable-smooth-scroll: true;
