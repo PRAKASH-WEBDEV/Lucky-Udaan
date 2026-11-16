@@ -65,7 +65,7 @@
                                         <input type="text" class="form-control @if ($err) is-invalid @endif" name="{{ $fkey }}" id="s-{{ $fkey }}" value="{{ $val }}" pattern="#[0-9a-fA-F]{6}" oninput="if(/^#[0-9a-f]{6}$/i.test(this.value))this.previousElementSibling.value=this.value">
                                     </div>
                                 @else
-                                    <input type="{{ in_array($ftype, ['email', 'url', 'number']) ? $ftype : 'text' }}" class="form-control @if ($err) is-invalid @endif" name="{{ $fkey }}" id="s-{{ $fkey }}" value="{{ $val }}">
+                                    <input type="{{ in_array($ftype, ['email', 'url', 'number', 'time']) ? $ftype : 'text' }}" class="form-control @if ($err) is-invalid @endif" name="{{ $fkey }}" id="s-{{ $fkey }}" value="{{ $val }}">
                                 @endif
                                 @if ($err)<div class="invalid-feedback d-block">{{ $err }}</div>@endif
                             </div>

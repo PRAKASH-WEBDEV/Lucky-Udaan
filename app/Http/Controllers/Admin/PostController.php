@@ -36,7 +36,11 @@ class PostController extends ResourceController
             $this->slugField($item, 'posts'),
             ['name' => 'excerpt', 'label' => 'Summary', 'type' => 'textarea', 'rows' => 3, 'rules' => 'nullable|string|max:500', 'counter' => 200],
             ['name' => 'body', 'label' => 'Content', 'type' => 'editor'],
-            ['name' => 'author', 'label' => 'Author', 'col' => 4, 'rules' => 'nullable|string|max:120'],
+            ['name' => 'category_id', 'label' => 'Category', 'type' => 'select', 'col' => 6, 'empty' => '— None —', 'options' => \App\Models\Category::options(), 'rules' => 'nullable|exists:categories,id'],
+            ...(($tags = \App\Models\Tag::orderBy('name')->pluck('name', 'slug')->all())
+                ? [['name' => 'tags', 'label' => 'Tags', 'type' => 'checkboxes', 'options' => $tags, 'rules' => 'nullable']]
+                : []),
+            ['name' => 'author', 'label' => 'Author', 'col' => 4, 'rules' => 'nullable|string|max:120', 'datalist' => \App\Models\Author::where('is_active', true)->orderBy('name')->pluck('name')->all()],
             ['name' => 'source', 'label' => 'Publication / source', 'col' => 4, 'rules' => 'nullable|string|max:120', 'help' => 'For media coverage, e.g. newspaper name.'],
             ['name' => 'external_url', 'label' => 'External link', 'type' => 'url', 'col' => 4, 'rules' => 'nullable|url|max:255'],
             ['name' => 'video_url', 'label' => 'YouTube video link', 'type' => 'url', 'col' => 12, 'rules' => 'nullable|url|max:255'],

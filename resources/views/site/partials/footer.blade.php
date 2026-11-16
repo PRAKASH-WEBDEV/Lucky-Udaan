@@ -45,6 +45,17 @@
                     @if (setting('office_hours'))<li class="d-flex gap-2"><i class="bi bi-clock text-warning"></i><span>{{ setting('office_hours') }}</span></li>@endif
                 </ul>
                 <a href="{{ route('donate') }}" class="btn btn-accent mt-4"><i class="bi bi-heart-fill"></i> Support our work</a>
+                <form method="post" action="{{ route('newsletter.subscribe') }}" class="mt-4" id="newsletter">
+                    @csrf
+                    <x-honeypot />
+                    <label class="small d-block mb-1" for="newsletter-email">Get our updates by email</label>
+                    <div class="input-group input-group-sm">
+                        <input type="email" class="form-control" id="newsletter-email" name="newsletter_email" placeholder="you@example.com" required maxlength="150" autocomplete="email">
+                        <button class="btn btn-light" type="submit">Subscribe</button>
+                    </div>
+                    @if (session('newsletter'))<div class="small mt-1" role="status"><i class="bi bi-check-circle"></i> {{ session('newsletter') }}</div>@endif
+                    @error('newsletter_email')<div class="small mt-1 text-warning">{{ $message }}</div>@enderror
+                </form>
             </div>
         </div>
         <div class="footer-bottom">

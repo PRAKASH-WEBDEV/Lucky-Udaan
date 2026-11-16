@@ -107,7 +107,7 @@
 
             @default
                 @php
-                    $htmlType = match ($type) { 'datetime' => 'datetime-local', 'number', 'email', 'url', 'date', 'color', 'password' => $type, default => 'text' };
+                    $htmlType = match ($type) { 'datetime' => 'datetime-local', 'number', 'email', 'url', 'date', 'time', 'color', 'password' => $type, default => 'text' };
                 @endphp
                 <input type="{{ $htmlType }}" class="form-control @if ($type === 'color') form-control-color w-100 @endif @if ($error) is-invalid @endif"
                        name="{{ $name }}" id="{{ $id }}" value="{{ $value }}"

@@ -17,8 +17,21 @@
         'admin.donations.index' => $admin->canAccess('donations') ? \App\Models\Donation::where('status', 'pending')->count() : 0,
         'admin.volunteers.index' => $admin->canAccess('volunteers') ? \App\Models\Volunteer::where('status', 'new')->count() : 0,
         'admin.members.index' => $admin->canAccess('members') ? \App\Models\Member::where('status', 'pending')->count() : 0,
+        'admin.leaves.index' => $admin->canAccess('hr') ? rescue(fn () => \App\Models\LeaveRequest::where('status', 'pending')->count(), 0, false) : 0,
+        'admin.notifications.index' => rescue(fn () => \App\Models\AdminNotification::whereNull('read_at')->count(), 0, false),
     ];
     $routeBase = fn ($r) => $r ? \Illuminate\Support\Str::beforeLast($r, '.').'.*' : null;
+    // A link is active when its route matches and any query params it carries (e.g. ?tab=seo) match too.
+    $isActive = function (string $route, array $params = []) use ($routeBase) {
+        if ($params) {
+            return request()->routeIs($route) && collect($params)->every(fn ($v, $k) => request($k, $k === 'tab' ? 'general' : null) == $v);
+        }
+        if (! str_ends_with($route, '.index')) {
+            return request()->routeIs($route);
+        }
+
+        return request()->routeIs($routeBase($route)) && ! (request()->routeIs('admin.attendance.create') && $route === 'admin.attendance.index');
+    };
 @endphp
 <body>
 <div class="admin-shell">
@@ -34,21 +47,30 @@
                     @php $pendingHeading = $item; @endphp
                     @continue
                 @endif
-                @php [$label, $icon, $route, $module] = $item; $children = $item[4] ?? null; @endphp
+                @php
+                    [$label, $icon, $route, $module] = $item;
+                    $params = $item[5] ?? [];
+                    // Children: [label, route, params, module]; keep only the ones this admin may open.
+                    $children = collect($item[4] ?? [])
+                        ->map(fn ($c) => [$c[0], $c[1], $c[2] ?? [], $c[3] ?? $module])
+                        ->filter(fn ($c) => ! $c[3] || $admin->canAccess($c[3]))->values();
+                @endphp
                 @continue($module && ! $admin->canAccess($module))
+                @continue(! empty($item[4]) && $children->isEmpty())
                 @if ($pendingHeading)<div class="sb-heading">{{ $pendingHeading }}</div>@php $pendingHeading = null; @endphp@endif
-                @if ($children)
-                    @php $open = collect($children)->contains(fn ($c) => request()->routeIs($routeBase($c[1]))); $cid = 'sb-'.\Illuminate\Support\Str::slug($label); @endphp
+                @if ($children->isNotEmpty())
+                    @php $open = $children->contains(fn ($c) => $isActive($c[1], $c[2])); $cid = 'sb-'.\Illuminate\Support\Str::slug($label); @endphp
                     <button class="sb-link @if ($open) active @endif" type="button" data-bs-toggle="collapse" data-bs-target="#{{ $cid }}" aria-expanded="{{ $open ? 'true' : 'false' }}" title="{{ $label }}">
                         <i class="bi bi-{{ $icon }}"></i><span class="label">{{ $label }}</span><i class="bi bi-chevron-down chev"></i>
                     </button>
                     <ul class="sb-sub collapse @if ($open) show @endif" id="{{ $cid }}">
-                        @foreach ($children as [$cl, $cr])
-                            <li><a href="{{ route($cr) }}" @class(['active' => request()->routeIs($routeBase($cr))])>{{ $cl }}</a></li>
+                        @foreach ($children as [$cl, $cr, $cp])
+                            <li><a href="{{ route($cr, $cp) }}" @class(['active' => $isActive($cr, $cp)])>{{ $cl }}
+                                @if (! empty($badges[$cr]))<span class="badge rounded-pill text-bg-warning ms-1">{{ $badges[$cr] }}</span>@endif</a></li>
                         @endforeach
                     </ul>
                 @else
-                    <a href="{{ route($route) }}" @class(['sb-link', 'active' => $route === 'admin.dashboard' ? request()->routeIs('admin.dashboard') : request()->routeIs($routeBase($route))]) title="{{ $label }}">
+                    <a href="{{ route($route, $params) }}" @class(['sb-link', 'active' => $isActive($route, $params)]) title="{{ $label }}">
                         <i class="bi bi-{{ $icon }}"></i><span class="label">{{ $label }}</span>
                         @if (! empty($badges[$route]))<span class="badge rounded-pill text-bg-warning">{{ $badges[$route] }}</span>@endif
                     </a>

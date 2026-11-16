@@ -107,7 +107,7 @@
                                     @foreach ($controller->actionsFor($item) as [$label, $url, $aicon])
                                         <a href="{{ $url }}" class="btn btn-light border btn-icon" title="{{ $label }}" aria-label="{{ $label }}" @if (str_starts_with($url, 'http') && ! str_contains($url, '/admin/')) target="_blank" rel="noopener" @endif><i class="bi bi-{{ $aicon }}"></i></a>
                                     @endforeach
-                                    <a href="{{ route($route.'.edit', $item->getKey()) }}" class="btn btn-light border btn-icon" title="Edit" aria-label="Edit"><i class="bi bi-pencil"></i></a>
+                                    @if ($canEdit)<a href="{{ route($route.'.edit', $item->getKey()) }}" class="btn btn-light border btn-icon" title="Edit" aria-label="Edit"><i class="bi bi-pencil"></i></a>@endif
                                     @if ($canDelete)
                                         <form method="post" action="{{ route($route.'.destroy', $item->getKey()) }}" data-confirm="This {{ strtolower($singular) }} will be permanently deleted. This cannot be undone.">
                                             @csrf @method('DELETE')

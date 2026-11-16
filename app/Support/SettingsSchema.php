@@ -89,6 +89,25 @@ class SettingsSchema
                 ['google_verification', 'Google Search Console verification code', 'text', 'nullable|string|max:120', ''],
                 ['ga_id', 'Google Analytics 4 ID (G-XXXX)', 'text', ['nullable', 'regex:/^G-[A-Z0-9]+$/'], ''],
             ]],
+            'hr' => ['Attendance', 'calendar-check', [
+                ['hr_office_start', 'Office start time', 'time', ['nullable', 'date_format:H:i'], '10:00'],
+                ['hr_office_end', 'Office end time', 'time', ['nullable', 'date_format:H:i'], '18:00'],
+                ['hr_grace_minutes', 'Grace period before “late” (minutes)', 'number', 'nullable|integer|min:0|max:240', '15'],
+                ['hr_half_day_hours', 'Minimum hours for a full day', 'number', 'nullable|numeric|min:1|max:24', '6'],
+                ['hr_weekly_off', 'Weekly off day(s)', 'text', 'nullable|string|max:60', 'Sunday'],
+                ['hr_working_days', 'Working days per month (for payroll)', 'number', 'nullable|integer|min:1|max:31', '26'],
+            ]],
+            'letterhead' => ['Letterhead', 'file-earmark-richtext', [
+                ['letterhead_logo', 'Letterhead logo (blank = site logo)', 'image', 'nullable', ''],
+                ['letterhead_tagline', 'Line under the name', 'text', 'nullable|string|max:255', 'A Section 8 company registered under the Companies Act, 2013'],
+                ['letterhead_footer', 'Footer line (blank = registration numbers)', 'text', 'nullable|string|max:255', ''],
+                ['letterhead_color', 'Accent colour', 'color', ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'], '#1f7a4d'],
+                ['letterhead_signature', 'Signature image (transparent PNG)', 'image', 'nullable', ''],
+            ]],
+            'notifications' => ['Notifications', 'bell', [
+                ['notify_email', 'Send alert emails to', 'email', 'nullable|email|max:150', ''],
+                ['notify_events', 'Email me about (comma separated: donation, enquiry, volunteer, member, newsletter, survey)', 'text', 'nullable|string|max:255', 'donation, enquiry, volunteer, member'],
+            ]],
             'theme' => ['Brand colours', 'palette', [
                 ['color_primary', 'Primary colour', 'color', ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'], '#1f7a4d'],
                 ['color_primary_dark', 'Dark colour', 'color', ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'], '#0f3d2e'],

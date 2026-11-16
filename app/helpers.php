@@ -108,3 +108,19 @@ if (! function_exists('whatsapp_link')) {
         return 'https://wa.me/'.$digits.($text ? '?text='.rawurlencode($text) : '');
     }
 }
+
+if (! function_exists('tr')) {
+    /**
+     * Translated text from Website → Translations. Language comes from ?lang=hi (remembered in
+     * the session) and falls back to English, then to $default.
+     */
+    function tr(string $key, ?string $default = null): ?string
+    {
+        static $rows;
+        $rows ??= rescue(fn () => cache()->remember('translations', 3600, fn () => \App\Models\Translation::all(['key', 'en', 'hi'])->keyBy('key')->toArray()), [], false);
+        $lang = app()->getLocale() === 'hi' ? 'hi' : 'en';
+        $row = $rows[$key] ?? null;
+
+        return ($row[$lang] ?? null) ?: ($row['en'] ?? null) ?: $default;
+    }
+}

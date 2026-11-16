@@ -37,6 +37,9 @@ class AppServiceProvider extends ServiceProvider
 
         Paginator::useBootstrapFive();
 
+        // Audit log of admin changes + notifications for visitor submissions.
+        \App\Support\AdminActivity::register();
+
         // Module-level authorisation for the dashboard: Gate::allows('module', 'donations').
         Gate::define('module', fn ($user, string $module) => $user instanceof Admin && $user->canAccess($module));
 

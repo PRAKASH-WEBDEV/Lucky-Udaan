@@ -99,5 +99,7 @@
 </section>
 @endif
 
+@include('site.partials.blocks', ['show' => ['value', 'journey', 'award', 'leader']])
+
 <x-donate-cta />
 @endsection

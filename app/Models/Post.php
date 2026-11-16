@@ -18,7 +18,13 @@ class Post extends Model
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
             'published_at' => 'datetime',
+            'tags' => 'array',
         ];
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 
     public const TYPES = [

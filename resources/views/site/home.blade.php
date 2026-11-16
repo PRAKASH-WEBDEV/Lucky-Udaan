@@ -134,6 +134,8 @@
 </section>
 @endif
 
+@include('site.partials.blocks', ['show' => ['trust', 'embed']])
+
 <x-donate-cta />
 
 {{-- ============ Events + news ============ --}}

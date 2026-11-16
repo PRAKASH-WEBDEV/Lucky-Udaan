@@ -49,6 +49,9 @@ abstract class ResourceController extends Controller
 
     protected bool $canDelete = true;
 
+    /** False makes the module a read-only log (no edit form). */
+    protected bool $canEdit = true;
+
     protected int $perPage = 15;
 
     /** Form field definitions. */
@@ -142,6 +145,7 @@ abstract class ResourceController extends Controller
 
     public function edit(int $id)
     {
+        abort_unless($this->canEdit, 404);
         $item = $this->newQuery()->findOrFail($id);
 
         return view('admin.resource.form', $this->viewData([
@@ -153,7 +157,8 @@ abstract class ResourceController extends Controller
 
     public function update(Request $request, int $id)
     {
-        $item = $this->model::findOrFail($id);
+        abort_unless($this->canEdit, 404);
+        $item = $this->newQuery()->findOrFail($id);
         $item->fill($this->validatedData($request, $item))->save();
         $this->afterSave($item, $request, false);
 
@@ -342,6 +347,7 @@ abstract class ResourceController extends Controller
             'icon' => $this->icon,
             'canCreate' => $this->canCreate,
             'canDelete' => $this->canDelete,
+            'canEdit' => $this->canEdit,
             'dateFilter' => (bool) $this->dateColumn,
             'searchPlaceholder' => 'Search '.Str::lower($this->title).'…',
         ], $extra);

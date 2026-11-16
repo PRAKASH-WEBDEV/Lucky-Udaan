@@ -62,6 +62,14 @@ Route::controller(Site\FormController::class)->group(function () {
     });
 });
 
+Route::controller(Site\EngageController::class)->group(function () {
+    Route::get('surveys/{survey:slug}', 'survey')->name('surveys.show');
+    Route::middleware(['throttle:forms', 'honeypot'])->group(function () {
+        Route::post('newsletter', 'subscribe')->name('newsletter.subscribe');
+        Route::post('surveys/{survey:slug}', 'submitSurvey')->name('surveys.submit');
+    });
+});
+
 Route::get('sitemap.xml', Site\SitemapController::class)->name('sitemap');
 Route::get('robots.txt', [Site\SitemapController::class, 'robots'])->name('robots');
 
