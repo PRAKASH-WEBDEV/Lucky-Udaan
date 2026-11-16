@@ -29,10 +29,13 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $credentials = $this->only('email', 'password') + ['is_active' => true];
+        // Emails are stored in lowercase; Postgres compares case-sensitively, so normalise first.
+        $email = Str::lower(trim((string) $this->input('email')));
+        $credentials = ['email' => $email, 'password' => (string) $this->input('password'), 'is_active' => true];
 
         if (! Auth::guard('admin')->attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey(), 300);
+            $this->logFailure($email);
 
             throw ValidationException::withMessages([
                 'email' => 'These credentials do not match an active account.',
@@ -40,6 +43,23 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+    }
+
+    /** Record why a login failed (never the password) so it can be diagnosed from the server logs. */
+    private function logFailure(string $email): void
+    {
+        try {
+            $admin = \App\Models\Admin::with('role')->whereRaw('lower(email) = ?', [$email])->first();
+            $reason = match (true) {
+                ! $admin => 'no admin with this email',
+                ! $admin->is_active => 'account is inactive',
+                ! \Illuminate\Support\Facades\Hash::check((string) $this->input('password'), $admin->password) => 'password does not match (length '.strlen((string) $this->input('password')).')',
+                default => 'credentials valid but guard rejected login',
+            };
+            logger()->warning('Admin login failed: '.$reason, ['email' => $email, 'ip' => $this->ip(), 'db' => config('database.default')]);
+        } catch (\Throwable $e) {
+            logger()->warning('Admin login failed; diagnosis error: '.$e->getMessage());
+        }
     }
 
     public function ensureIsNotRateLimited(): void
