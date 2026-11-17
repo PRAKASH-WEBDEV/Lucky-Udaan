@@ -47,6 +47,12 @@ return [
             'driver' => 'session',
             'provider' => 'admins',
         ],
+
+        // Staff portal (/staff): employees sign in to mark their own attendance.
+        'employee' => [
+            'driver' => 'session',
+            'provider' => 'employees',
+        ],
     ],
 
     /*
@@ -75,6 +81,11 @@ return [
         'admins' => [
             'driver' => 'eloquent',
             'model' => App\Models\Admin::class,
+        ],
+
+        'employees' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Employee::class,
         ],
 
         // 'users' => [

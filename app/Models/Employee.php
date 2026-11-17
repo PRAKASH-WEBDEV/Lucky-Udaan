@@ -3,18 +3,24 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasStatus;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Employee extends Model
+/** Staff record; also the sign-in account for the staff portal (guard "employee"). */
+class Employee extends Authenticatable
 {
     use HasStatus;
 
     protected $guarded = ['id'];
 
+    protected $hidden = ['password', 'remember_token'];
+
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'portal_access' => 'boolean',
+            'password' => 'hashed',
+            'last_login_at' => 'datetime',
             'dob' => 'date',
             'joining_date' => 'date',
         ];

@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: function () {
             Route::middleware('web')->prefix('admin')->name('admin.')->group(base_path('routes/admin.php'));
+            Route::middleware('web')->prefix('staff')->name('staff.')->group(base_path('routes/staff.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -25,9 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'honeypot' => \App\Http\Middleware\Honeypot::class,
         ]);
 
-        // Unauthenticated admin requests go to the admin login page.
-        $middleware->redirectGuestsTo(fn ($request) => route('admin.login'));
-        $middleware->redirectUsersTo(fn ($request) => route('admin.dashboard'));
+        // Unauthenticated requests go to the matching login page (staff portal or admin dashboard).
+        $middleware->redirectGuestsTo(fn ($request) => $request->is('staff', 'staff/*') ? route('staff.login') : route('admin.login'));
+        $middleware->redirectUsersTo(fn ($request) => $request->is('staff', 'staff/*') ? route('staff.dashboard') : route('admin.dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
