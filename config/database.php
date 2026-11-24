@@ -98,12 +98,9 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'require'),
-            // Neon's "-pooler" host is PgBouncer in transaction mode: server-side prepared
-            // statements break there (failed DEALLOCATEs silently abort transactions,
-            // e.g. during migrations). Emulated prepares avoid them entirely.
-            'options' => extension_loaded('pdo_pgsql') ? [
-                PDO::ATTR_EMULATE_PREPARES => (bool) env('DB_EMULATE_PREPARES', true),
-            ] : [],
+            // Do NOT enable PDO::ATTR_EMULATE_PREPARES here: with pgsql it sends `false`
+            // as '' and every boolean query fails. Pooler-safe migrations instead run
+            // outside a transaction ($withinTransaction = false).
         ],
 
         // Read-only source used once by `php artisan db:copy-mysql-to-pgsql`.
