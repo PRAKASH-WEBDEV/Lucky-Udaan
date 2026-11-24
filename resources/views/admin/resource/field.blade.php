@@ -109,6 +109,7 @@
                 @php
                     $htmlType = match ($type) { 'datetime' => 'datetime-local', 'number', 'email', 'url', 'date', 'time', 'color', 'password' => $type, default => 'text' };
                 @endphp
+                @if ($type === 'password')<div class="input-group">@endif
                 <input type="{{ $htmlType }}" class="form-control @if ($type === 'color') form-control-color w-100 @endif @if ($error) is-invalid @endif"
                        name="{{ $name }}" id="{{ $id }}" value="{{ $value }}"
                        @if ($type === 'number') step="{{ $field['step'] ?? 'any' }}" @endif
@@ -116,6 +117,11 @@
                        @if (! empty($field['counter'])) data-counter="{{ $field['counter'] }}" @endif
                        @if (! empty($field['datalist'])) list="{{ $id }}-list" @endif
                        @if (! empty($field['placeholder'])) placeholder="{{ $field['placeholder'] }}" @endif>
+                @if ($type === 'password')
+                    <button class="btn btn-light border" type="button" aria-label="Show or hide password" title="Show / hide password"
+                            onclick="const p=document.getElementById('{{ $id }}');p.type=p.type==='password'?'text':'password';this.firstElementChild.className=p.type==='password'?'bi bi-eye':'bi bi-eye-slash'"><i class="bi bi-eye"></i></button>
+                    </div>
+                @endif
                 @if (! empty($field['datalist']))
                     <datalist id="{{ $id }}-list">@foreach ($field['datalist'] as $opt)<option value="{{ $opt }}">@endforeach</datalist>
                 @endif
