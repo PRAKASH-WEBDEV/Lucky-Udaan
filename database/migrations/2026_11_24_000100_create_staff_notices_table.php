@@ -7,8 +7,14 @@ use Illuminate\Support\Facades\Schema;
 /** Notices the office posts for staff; shown in the staff portal. */
 return new class extends Migration
 {
+    public $withinTransaction = false;
+
     public function up(): void
     {
+        if (Schema::hasTable('staff_notices')) {
+            return;
+        }
+
         Schema::create('staff_notices', function (Blueprint $table) {
             $table->id();
             $table->string('title');
