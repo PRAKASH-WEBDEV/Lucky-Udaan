@@ -54,6 +54,18 @@ class StaffPortalTest extends TestCase
         $this->post('/staff/login', ['email' => 'off@example.com', 'password' => 'Staff1234'])->assertSessionHasErrors('email');
     }
 
+    public function test_login_ignores_case_of_stored_email_and_logs_reason(): void
+    {
+        Employee::create(['name' => 'Rehnuma', 'email' => ' Rehnuma@Example.com', 'password' => 'abcd123456', 'portal_access' => true, 'is_active' => true]);
+
+        \Illuminate\Support\Facades\Log::spy();
+        $this->post('/staff/login', ['email' => 'rehnuma@example.com', 'password' => 'wrong12345'])->assertSessionHasErrors('email');
+        \Illuminate\Support\Facades\Log::shouldHaveReceived('warning')->withArgs(fn ($m) => str_contains($m, 'password does not match'))->once();
+
+        $this->post('/staff/login', ['email' => 'rehnuma@example.com', 'password' => 'abcd123456'])->assertRedirect('/staff');
+        $this->assertAuthenticated('employee');
+    }
+
     public function test_employee_applies_for_leave_and_sees_notices(): void
     {
         $type = \App\Models\LeaveType::create(['name' => 'Casual Leave', 'annual_quota' => 12, 'is_active' => true]);

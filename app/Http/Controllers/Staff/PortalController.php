@@ -42,9 +42,12 @@ class PortalController extends Controller
             ]);
         }
 
-        $credentials = ['email' => $email, 'password' => (string) $request->input('password'), 'is_active' => true, 'portal_access' => true];
+        // Postgres compares case-sensitively: match the stored email whatever its case/spacing.
+        $storedEmail = Employee::whereRaw('lower(trim(email)) = ?', [$email])->value('email') ?? $email;
+        $credentials = ['email' => $storedEmail, 'password' => (string) $request->input('password'), 'is_active' => true, 'portal_access' => true];
         if (! Auth::guard('employee')->attempt($credentials, $request->boolean('remember'))) {
             RateLimiter::hit($key, 300);
+            $this->logFailure($email, (string) $request->input('password'), $request);
             throw ValidationException::withMessages([
                 'email' => 'These details do not match an employee with portal access. Please contact the office.',
             ]);
@@ -55,6 +58,25 @@ class PortalController extends Controller
         Auth::guard('employee')->user()->forceFill(['last_login_at' => now()])->save();
 
         return redirect()->intended(route('staff.dashboard'));
+    }
+
+    /** Record why a staff login failed (never the password) so it can be diagnosed from the server logs. */
+    private function logFailure(string $email, string $password, Request $request): void
+    {
+        try {
+            $employee = Employee::whereRaw('lower(trim(email)) = ?', [$email])->first();
+            $reason = match (true) {
+                ! $employee => 'no employee with this email',
+                ! $employee->is_active => 'employee is marked inactive (Currently employed is off)',
+                ! $employee->portal_access => '"Allow staff portal login" is off',
+                ! $employee->password => 'no password has been set',
+                ! \Illuminate\Support\Facades\Hash::check($password, $employee->password) => 'password does not match (typed length '.strlen($password).')',
+                default => 'details valid but guard rejected login',
+            };
+            logger()->warning('Staff login failed: '.$reason, ['email' => $email, 'employee_id' => $employee?->id, 'ip' => $request->ip()]);
+        } catch (\Throwable $e) {
+            logger()->warning('Staff login failed; diagnosis error: '.$e->getMessage());
+        }
     }
 
     public function logout(Request $request)
