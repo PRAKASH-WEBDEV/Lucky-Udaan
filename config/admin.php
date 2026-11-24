@@ -65,6 +65,7 @@ return [
             ['Attendance Devices', 'admin.devices.index'],
         ]],
         ['Holiday Calendar', 'calendar-heart', 'admin.holidays.index', 'hr'],
+        ['Staff Notices', 'megaphone', 'admin.staff-notices.index', 'hr'],
         ['Letterhead', 'file-earmark-richtext', null, null, [
             ['View / print letterhead', 'admin.hr.letterhead', [], 'hr'],
             ['Letterhead settings', 'admin.settings.edit', ['tab' => 'letterhead'], 'settings'],

@@ -56,6 +56,7 @@ Route::middleware(['auth:admin', 'admin.active'])->group(function () {
         ['devices', Admin\HrDeviceController::class, 'hr'],
         ['violations', Admin\HrViolationController::class, 'hr'],
         ['offer-letters', Admin\OfferLetterController::class, 'hr'],
+        ['staff-notices', Admin\StaffNoticeController::class, 'hr'],
         ['expense-claims', Admin\ExpenseClaimController::class, 'hr'],
         ['payroll', Admin\PayrollController::class, 'payroll'],
         ['salary-slips', Admin\SalarySlipController::class, 'payroll'],
@@ -107,6 +108,7 @@ Route::middleware(['auth:admin', 'admin.active'])->group(function () {
     Route::middleware('admin.can:donations')->get('donations/{id}/receipt', [Admin\DonationController::class, 'receipt'])->whereNumber('id')->name('donations.receipt');
     Route::middleware('admin.can:enquiries')->get('enquiries/{id}/attachment', [Admin\EnquiryController::class, 'attachment'])->whereNumber('id')->name('enquiries.attachment');
 
+    Route::post('system/update-database', [Admin\SystemController::class, 'updateDatabase'])->name('system.update-database');
     Route::post('notifications/read-all', [Admin\NotificationController::class, 'markAllRead'])->name('notifications.read-all');
 
     Route::middleware('admin.can:hr')->group(function () {

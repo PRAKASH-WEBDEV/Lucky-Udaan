@@ -38,6 +38,11 @@ class Employee extends Authenticatable
         return $this->hasMany(Attendance::class);
     }
 
+    public function leaveRequests()
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
     /** Monthly gross: explicit salary, else the structure total. */
     public function monthlyGross(): float
     {

@@ -106,6 +106,15 @@
         </header>
 
         <main class="content" id="main">
+            @if (auth('admin')->user()?->isSuperAdmin() && ($pendingDb = \App\Support\DatabaseUpdate::pending()))
+                <div class="alert alert-warning d-flex flex-wrap align-items-center gap-2" role="alert">
+                    <i class="bi bi-database-exclamation"></i>
+                    <div class="me-auto"><strong>Database update needed.</strong> New features ({{ count($pendingDb) }} change{{ count($pendingDb) > 1 ? 's' : '' }}) need a one-time database update before they work.</div>
+                    <form method="post" action="{{ route('admin.system.update-database') }}">@csrf
+                        <button class="btn btn-warning btn-sm"><i class="bi bi-arrow-repeat"></i> Update database now</button>
+                    </form>
+                </div>
+            @endif
             @if (session('success'))
                 <div class="alert alert-success alert-dismissible fade show d-flex gap-2" role="status" data-autohide>
                     <i class="bi bi-check-circle-fill"></i><div>{{ session('success') }}</div>

@@ -53,4 +53,39 @@ class StaffPortalTest extends TestCase
         auth('admin')->logout();
         $this->post('/staff/login', ['email' => 'off@example.com', 'password' => 'Staff1234'])->assertSessionHasErrors('email');
     }
+
+    public function test_employee_applies_for_leave_and_sees_notices(): void
+    {
+        $type = \App\Models\LeaveType::create(['name' => 'Casual Leave', 'annual_quota' => 12, 'is_active' => true]);
+        \App\Models\StaffNotice::create(['title' => 'Office closed Saturday', 'message' => 'Maintenance work.', 'priority' => 'important']);
+        $employee = Employee::create(['name' => 'Asha Devi', 'email' => 'asha@example.com', 'password' => 'Staff1234', 'portal_access' => true, 'is_active' => true]);
+
+        $this->actingAs($employee, 'employee');
+        $this->get('/staff')->assertOk()->assertSee('Office timings')->assertSee('Office closed Saturday');
+        $this->get('/staff/leave')->assertOk()->assertSee('Casual Leave');
+
+        $from = today()->addDays(3)->toDateString();
+        $this->post('/staff/leave', ['leave_type_id' => $type->id, 'from_date' => $from, 'to_date' => $from, 'half_day' => '1', 'reason' => 'Family function'])
+            ->assertRedirect('/staff/leave');
+        $leave = $employee->leaveRequests()->first();
+        $this->assertSame('pending', $leave->status);
+        $this->assertEquals(0.5, $leave->days);
+        $this->assertDatabaseHas('admin_notifications', ['type' => 'leave']);
+
+        // Overlapping request is refused; a decided request can no longer be cancelled.
+        $this->post('/staff/leave', ['leave_type_id' => $type->id, 'from_date' => $from, 'to_date' => $from, 'reason' => 'Again'])->assertSessionHasErrors('from_date');
+        $leave->update(['status' => 'approved', 'admin_note' => 'Enjoy']);
+        $this->get('/staff/notices')->assertOk()->assertSee('was approved')->assertSee('Maintenance work.');
+        $this->delete('/staff/leave/'.$leave->id)->assertNotFound();
+    }
+
+    public function test_database_update_button_and_staff_notices_admin(): void
+    {
+        $admin = Admin::where('email', 'admin@luckyudaanfoundation.com')->first();
+        $this->actingAs($admin, 'admin')->get('/admin')->assertOk()->assertDontSee('Database update needed');
+        $this->post('/admin/system/update-database')->assertSessionHas('success', 'The database is already up to date.');
+        $this->get('/admin/staff-notices')->assertOk();
+        $this->post('/admin/staff-notices', ['title' => 'Team meeting', 'priority' => 'normal', 'is_active' => '1'])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('staff_notices', ['title' => 'Team meeting']);
+    }
 }

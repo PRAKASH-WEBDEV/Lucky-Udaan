@@ -3,10 +3,16 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminNotification;
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\Holiday;
+use App\Models\LeaveType;
+use App\Models\StaffNotice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -76,7 +82,115 @@ class PortalController extends Controller
             'today' => $today,
             'month' => $month,
             'counts' => $month->countBy('status'),
+            'notices' => $this->noticeFeed($employee)->take(3),
+            'holidays' => Holiday::where('is_active', true)->whereDate('date', '>=', today())->orderBy('date')->limit(3)->get(),
         ]);
+    }
+
+    public function leave(Request $request)
+    {
+        $employee = $this->employee($request);
+        if (! $employee) {
+            return redirect()->route('staff.login');
+        }
+
+        $requests = $employee->leaveRequests()->with('leaveType')->orderByDesc('from_date')->limit(50)->get();
+        $types = LeaveType::where('is_active', true)->orderBy('name')->get();
+        $used = $employee->leaveRequests()->where('status', 'approved')->whereYear('from_date', now()->year)
+            ->selectRaw('leave_type_id, sum(days) as used')->groupBy('leave_type_id')->pluck('used', 'leave_type_id');
+
+        return view('staff.leave', compact('employee', 'requests', 'types', 'used'));
+    }
+
+    public function applyLeave(Request $request)
+    {
+        $employee = $this->employee($request);
+        if (! $employee) {
+            return redirect()->route('staff.login');
+        }
+
+        $data = $request->validate([
+            'leave_type_id' => ['required', Rule::exists('leave_types', 'id')->where('is_active', true)],
+            'from_date' => 'required|date|after_or_equal:'.today()->subDays(7)->toDateString(),
+            'to_date' => 'required|date|after_or_equal:from_date|before_or_equal:'.today()->addYear()->toDateString(),
+            'half_day' => 'nullable|boolean',
+            'reason' => 'required|string|max:1000',
+        ], [], ['leave_type_id' => 'leave type', 'from_date' => 'from date', 'to_date' => 'to date']);
+
+        $from = Carbon::parse($data['from_date']);
+        $to = Carbon::parse($data['to_date']);
+        $days = $request->boolean('half_day') && $from->eq($to) ? 0.5 : $from->diffInDays($to) + 1;
+
+        $overlap = $employee->leaveRequests()->whereIn('status', ['pending', 'approved'])
+            ->whereDate('from_date', '<=', $to)->whereDate('to_date', '>=', $from)->exists();
+        if ($overlap) {
+            return back()->withInput()->withErrors(['from_date' => 'You already have a leave request for some of these dates.']);
+        }
+
+        $leave = $employee->leaveRequests()->create([
+            'leave_type_id' => $data['leave_type_id'],
+            'from_date' => $from->toDateString(),
+            'to_date' => $to->toDateString(),
+            'days' => $days,
+            'reason' => $data['reason'],
+            'status' => 'pending',
+        ]);
+
+        AdminNotification::notify('leave', 'Leave request from '.$employee->name,
+            $from->format('d M').($to->ne($from) ? ' – '.$to->format('d M') : '').' · '.$data['reason'],
+            route('admin.leaves.edit', $leave->id));
+
+        return redirect()->route('staff.leave')->with('success', 'Leave request sent. You will see the decision here once the office reviews it.');
+    }
+
+    public function cancelLeave(Request $request, int $id)
+    {
+        $employee = $this->employee($request);
+        if (! $employee) {
+            return redirect()->route('staff.login');
+        }
+
+        $leave = $employee->leaveRequests()->where('status', 'pending')->findOrFail($id);
+        $leave->delete();
+
+        return back()->with('success', 'Leave request cancelled.');
+    }
+
+    public function notices(Request $request)
+    {
+        $employee = $this->employee($request);
+        if (! $employee) {
+            return redirect()->route('staff.login');
+        }
+
+        return view('staff.notices', [
+            'employee' => $employee,
+            'notices' => $this->noticeFeed($employee),
+            'holidays' => Holiday::where('is_active', true)->whereDate('date', '>=', today())->orderBy('date')->limit(10)->get(),
+        ]);
+    }
+
+    /** Office notices plus this employee's leave decisions, newest first. */
+    private function noticeFeed(Employee $employee): Collection
+    {
+        $notices = StaffNotice::where('is_active', true)->latest()->limit(30)->get()->map(fn ($n) => (object) [
+            'icon' => $n->priority === 'important' ? 'exclamation-triangle' : 'megaphone',
+            'tone' => $n->priority === 'important' ? 'danger' : 'primary',
+            'title' => $n->title,
+            'message' => $n->message,
+            'at' => $n->created_at,
+        ]);
+
+        $decisions = $employee->leaveRequests()->whereIn('status', ['approved', 'rejected'])->where('updated_at', '>=', now()->subDays(60))
+            ->latest('updated_at')->get()->map(fn ($l) => (object) [
+                'icon' => $l->status === 'approved' ? 'check-circle' : 'x-circle',
+                'tone' => $l->status === 'approved' ? 'success' : 'danger',
+                'title' => 'Your leave for '.$l->from_date->format('d M').($l->to_date->ne($l->from_date) ? ' – '.$l->to_date->format('d M') : '').' was '.$l->status,
+                'message' => $l->admin_note,
+                'at' => $l->updated_at,
+            ]);
+
+        return $notices->concat($decisions)->sortByDesc('at')->values();
     }
 
     public function checkIn(Request $request)
